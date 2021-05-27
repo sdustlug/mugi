@@ -1,0 +1,9 @@
+[Unit]
+Description=mugi sync ubuntu every 6h
+
+[Timer]
+OnActiveSec=300s
+OnUnitActiveSec=6h
+
+[Install]
+WantedBy=multi-user.target

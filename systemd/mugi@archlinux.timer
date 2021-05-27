@@ -1,0 +1,9 @@
+[Unit]
+Description=mugi sync archlinx every 3h
+
+[Timer]
+OnActiveSec = 300s
+OnUnitActiveSec=3h
+
+[Install]
+WantedBy=multi-user.target

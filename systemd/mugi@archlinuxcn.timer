@@ -1,0 +1,9 @@
+[Unit]
+Description=mugi sync archlinuxcn every 5h
+
+[Timer]
+OnActiveSec=300s
+OnUnitActiveSec=5h
+
+[Install]
+WantedBy=multi-user.target

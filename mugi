@@ -1,0 +1,151 @@
+#!/bin/bash
+
+MIRROR=""
+LOG=""
+STATUS=""
+TASK_NAME=""
+UP_STREAM=""
+TIME_OUT=""
+BANDWITH_LIMIT=""
+
+die() {
+    echo "$*"
+    exit 1
+}
+
+read_ini() {
+    local filename=$1; section=$2; key=$3
+    local result=`awk '/\['$section'\]/{a=1}a==1&&$1~/'$key'/{print $1}' $filename | grep $key= | awk -F '=' '{print $2;exit}'`
+    echo $result
+}
+
+load_config() {
+    [[ $TASK_NAME ]] || die "task name needed"
+    [[ -e $CONFIG_FILE ]] || die "\`$CONFIG_FILE' does not exist"
+    MIRROR=$(read_ini $CONFIG_FILE global mirror)
+    LOG=$(read_ini $CONFIG_FILE global log)
+    STATUS=$(read_ini $CONFIG_FILE global status)
+    TIME_OUT=$(read_ini $CONFIG_FILE global timeout)
+
+    if [ ! $MIRROR ]
+    then
+	    MIRROR="/mirror"
+    fi
+
+    if [ ! $LOG ]
+    then
+        LOG="${MIRROR}/log/${TASK_NAME}"
+    fi
+
+    if [ ! $STATUS ]
+    then
+        STATUS="${MIRROR}/tasks"
+    fi
+
+    if [ ! $TIME_OUT ]
+    then
+        TIME_OUT=30
+    fi
+
+    UP_STREAM=$(read_ini $CONFIG_FILE $TASK_NAME upstream)
+    if [ ! $UP_STREAM ]
+    then
+        die "\`$TASK_NAME' upstream does not exist"
+    fi
+    
+    DIR=$(read_ini $CONFIG_FILE $TASK_NAME dir)
+    if [ ! $DIR ]
+    then
+        DIR=$TASK_NAME
+    fi
+
+    BANDWITH_LIMIT=$(read_ini $CONFIG_FILE $TASK_NAME bandwith)
+    if [ ! $BANDWITH_LIMIT ]
+    then
+        BANDWITH_LIMIT=0
+    fi
+}
+
+creat_folder_if_not_exist() {
+    for dirname in $MIRROR $LOG $STATUS $LOCAL_PATH
+    do
+        if [ ! -d $dirname  ]
+        then
+            mkdir -p $dirname
+        fi
+    done
+}
+
+creat_status_json_if_not_exist() {
+    if [ ! -f "$JSON_FILE" ]; then
+        echo "[]" > "$JSON_FILE"
+    fi
+}
+
+init_task_in_json_if_not_exist() {
+    if test -z "$(jq '.[] | select(.name=="'${TASK_NAME}'")' $JSON_FILE)"; then
+        NOW_TIME_TS=$(date +%s)
+        NOW_TIME=$(date -d @${NOW_TIME_TS} +"%F %T %z")
+        SIZE=$(du -sh ${LOCAL_PATH} | cut -f1)
+        jq '. += [{
+              "name": "'${TASK_NAME}'",
+              "is_master": true,
+              "status": "failed",
+              "last_update_ts": 0000000000,
+              "last_started_ts": '${NOW_TIME_TS}',
+              "last_ended_ts": 0000000000,
+              "upstream": "'${UP_STREAM}'",
+              "size": "'${SIZE}'"}]
+            ' $JSON_FILE|sponge $JSON_FILE
+    fi
+}
+
+change_status() {
+    local cmd=$1
+    local index=$(jq 'map(.name == "'${TASK_NAME}'") | index(true)' $JSON_FILE)
+    local now_time_ts=$(date +%s)
+    if [ $cmd == "start" ]; then
+        jq '
+            .['${index}'].status="syncing"|
+            .['${index}'].upstream="'${UP_STREAM}'"|
+            .['${index}'].last_started_ts='${now_time_ts}'
+        ' $JSON_FILE|sponge $JSON_FILE
+    elif [ $cmd == "success" ]; then
+        jq '
+            .['${index}'].status="success"|
+            .['${index}'].last_ended_ts='${now_time_ts}'|
+            .['${index}'].last_update_ts='${now_time_ts}'
+        ' $JSON_FILE|sponge $JSON_FILE
+    elif [ $cmd == "failed" ]; then
+        jq '
+            .['${index}'].status="failed"|
+            .['${index}'].last_ended_ts='${now_time_ts}'
+        ' $JSON_FILE|sponge $JSON_FILE
+    fi
+}
+
+CONFIG_FILE=$1
+TASK_NAME=$2
+load_config
+LOCAL_PATH="${MIRROR}/${DIR}"
+creat_folder_if_not_exist
+LOG_FILE="${LOG}/$(date +%s).log"
+ln -snf $LOG_FILE "${LOG}/latest"
+JSON_FILE="${STATUS}/mugi.json"
+creat_status_json_if_not_exist
+init_task_in_json_if_not_exist
+
+change_status "start"
+
+echo "Start sync ${TASK_NAME} at $(date +"%Y-%m-%d %H:%M:%S")" >> ${LOG_FILE}
+echo "Start sync ${TASK_NAME} :)"
+rsync -avrtH --delay-updates --delete-after --timeout=${TIME_OUT} --bwlimit=${BANDWITH_LIMIT} ${UP_STREAM} ${LOCAL_PATH} >> ${LOG_FILE} 2>&1
+if [[ $? -ne 0 ]]
+then
+    change_status "failed"
+    echo "Sync ${TASK_NAME} failed :("
+    die "\`$TASK_NAME' sync failed"
+else
+    change_status "success"
+    echo "Sync ${TASK_NAME} succeed :)"
+fi

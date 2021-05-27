@@ -1,0 +1,11 @@
+[Unit]
+Description=mugi sync
+After=network.target
+ 
+[Service]
+User=mirror
+Group=mirror
+ExecStart=mugi /etc/mugi/mugi.conf %i
+ 
+[Install]
+WantedBy=multi-user.target
