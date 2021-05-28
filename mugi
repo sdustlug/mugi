@@ -21,7 +21,7 @@ read_ini() {
 
 load_config() {
     [[ $TASK_NAME ]] || die "task name needed"
-    [[ -e $CONFIG_FILE ]] || die "\`$CONFIG_FILE' does not exist"
+    [[ -e $CONFIG_FILE ]] || die "'${CONFIG_FILE}' does not exist"
     MIRROR=$(read_ini $CONFIG_FILE global mirror)
     LOG=$(read_ini $CONFIG_FILE global log)
     STATUS=$(read_ini $CONFIG_FILE global status)
@@ -50,7 +50,7 @@ load_config() {
     UP_STREAM=$(read_ini $CONFIG_FILE $TASK_NAME upstream)
     if [ ! $UP_STREAM ]
     then
-        die "\`$TASK_NAME' upstream does not exist"
+        die "'${TASK_NAME}' upstream does not exist"
     fi
     
     DIR=$(read_ini $CONFIG_FILE $TASK_NAME dir)
@@ -146,8 +146,7 @@ rsync -avrtH --delay-updates --delete-after --timeout=${TIME_OUT} --bwlimit=${BA
 if [[ $? -ne 0 ]]
 then
     change_status "failed"
-    echo "Sync ${TASK_NAME} failed :("
-    die "\`$TASK_NAME' sync failed"
+    die "Sunc '${TASK_NAME}' failed :("
 else
     change_status "success"
     echo "Sync ${TASK_NAME} succeed :)"

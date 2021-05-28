@@ -28,7 +28,7 @@ bash、rsync、systemd、jq、sponge
 
 ## 配置文件格式
 
-默认的配置文件位于 `/etc/mugi/mugi.conf`, 样例配置可以查看 [mugi.cong](./mugi.conf)
+默认的配置文件位于 `/etc/mugi/mugi.conf`, 样例配置可以查看 [mugi.conf](./mugi.conf)
 
 ### global
 
