@@ -6,6 +6,9 @@ After=network.target
 User=mirror
 Group=mirror
 ExecStart=mugi /etc/mugi/mugi.conf %i
+Restart=on-failure
+StartLimitIntervalSec=90
+StartLimitBurst=3
  
 [Install]
 WantedBy=multi-user.target
