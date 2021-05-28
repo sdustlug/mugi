@@ -84,18 +84,17 @@ creat_status_json_if_not_exist() {
 
 init_task_in_json_if_not_exist() {
     if test -z "$(jq '.[] | select(.name=="'${TASK_NAME}'")' $JSON_FILE)"; then
-        NOW_TIME_TS=$(date +%s)
-        NOW_TIME=$(date -d @${NOW_TIME_TS} +"%F %T %z")
-        SIZE=$(du -sh ${LOCAL_PATH} | cut -f1)
+        local now_time_ts=$(date +%s)
+        local size=$(du -sh ${LOCAL_PATH} | cut -f1)
         jq '. += [{
               "name": "'${TASK_NAME}'",
               "is_master": true,
               "status": "failed",
               "last_update_ts": 0000000000,
-              "last_started_ts": '${NOW_TIME_TS}',
+              "last_started_ts": '${now_time_ts}',
               "last_ended_ts": 0000000000,
               "upstream": "'${UP_STREAM}'",
-              "size": "'${SIZE}'"}]
+              "size": "'${size}'"}]
             ' $JSON_FILE|sponge $JSON_FILE
     fi
 }
@@ -104,22 +103,26 @@ change_status() {
     local cmd=$1
     local index=$(jq 'map(.name == "'${TASK_NAME}'") | index(true)' $JSON_FILE)
     local now_time_ts=$(date +%s)
+    local size=$(du -sh ${LOCAL_PATH} | cut -f1)
     if [ $cmd == "start" ]; then
         jq '
             .['${index}'].status="syncing"|
             .['${index}'].upstream="'${UP_STREAM}'"|
-            .['${index}'].last_started_ts='${now_time_ts}'
+            .['${index}'].last_started_ts='${now_time_ts}'|
+            .['${index}'].size='${size}'
         ' $JSON_FILE|sponge $JSON_FILE
     elif [ $cmd == "success" ]; then
         jq '
             .['${index}'].status="success"|
             .['${index}'].last_ended_ts='${now_time_ts}'|
-            .['${index}'].last_update_ts='${now_time_ts}'
+            .['${index}'].last_update_ts='${now_time_ts}'|
+            .['${index}'].size='${size}'
         ' $JSON_FILE|sponge $JSON_FILE
     elif [ $cmd == "failed" ]; then
         jq '
             .['${index}'].status="failed"|
-            .['${index}'].last_ended_ts='${now_time_ts}'
+            .['${index}'].last_ended_ts='${now_time_ts}'|
+            .['${index}'].size='${size}'
         ' $JSON_FILE|sponge $JSON_FILE
     fi
 }
