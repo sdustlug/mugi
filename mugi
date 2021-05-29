@@ -109,20 +109,20 @@ change_status() {
             .['${index}'].status="syncing"|
             .['${index}'].upstream="'${UP_STREAM}'"|
             .['${index}'].last_started_ts='${now_time_ts}'|
-            .['${index}'].size='${size}'
+            .['${index}'].size="'${size}'"
         ' $JSON_FILE|sponge $JSON_FILE
     elif [ $cmd == "success" ]; then
         jq '
             .['${index}'].status="success"|
             .['${index}'].last_ended_ts='${now_time_ts}'|
             .['${index}'].last_update_ts='${now_time_ts}'|
-            .['${index}'].size='${size}'
+            .['${index}'].size="'${size}'"
         ' $JSON_FILE|sponge $JSON_FILE
     elif [ $cmd == "failed" ]; then
         jq '
             .['${index}'].status="failed"|
             .['${index}'].last_ended_ts='${now_time_ts}'|
-            .['${index}'].size='${size}'
+            .['${index}'].size="'${size}'"
         ' $JSON_FILE|sponge $JSON_FILE
     fi
 }
