@@ -10,7 +10,6 @@ bash、rsync、systemd、jq、sponge
 
 ```
 /
-├── 1.txt
 ├── etc
 │   ├── mugi
 │   │   └── mugi.conf

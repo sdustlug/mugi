@@ -142,7 +142,7 @@ change_status "start"
 
 echo "Start sync ${TASK_NAME} at $(date +"%Y-%m-%d %H:%M:%S")" >> ${LOG_FILE}
 echo "Start sync ${TASK_NAME} :)"
-rsync -avrtH --delay-updates --delete-after --timeout=${TIME_OUT} --bwlimit=${BANDWITH_LIMIT} ${UP_STREAM} ${LOCAL_PATH} >> ${LOG_FILE} 2>&1
+rsync -aHvh --no-o --no-g --stats --exclude='.~tmp~/' --filter='risk .~tmp~/' --delete --delete-after --delay-updates --delete-excluded --safe-links --timeout=${TIME_OUT} --bwlimit=${BANDWITH_LIMIT} ${UP_STREAM} ${LOCAL_PATH} >> ${LOG_FILE} 2>&1
 if [[ $? -ne 0 ]]
 then
     change_status "failed"
