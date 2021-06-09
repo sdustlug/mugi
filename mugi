@@ -29,17 +29,19 @@ load_config() {
 
     if [ ! $MIRROR ]
     then
-	    MIRROR="/mirror"
+	    MIRROR="/mirrors/repo"
     fi
 
     if [ ! $LOG ]
     then
-        LOG="${MIRROR}/log/${TASK_NAME}"
+        LOG="${MIRROR}/logs/${TASK_NAME}"
+    else
+        LOG=${LOG}/${TASK_NAME}
     fi
 
     if [ ! $STATUS ]
     then
-        STATUS="${MIRROR}/tasks"
+        STATUS="${MIRROR}/status"
     fi
 
     if [ ! $TIME_OUT ]
