@@ -15,8 +15,16 @@ die() {
 
 read_ini() {
     local filename=$1; section=$2; key=$3
-    local result=`awk '/\['$section'\]/{a=1}a==1&&$1~/'$key'/{print $1}' $filename | grep $key= | awk -F '=' '{print $2;exit}'`
-    echo $result
+    awk '
+    /\['"$section"'\]/ {
+        matched=1
+    }
+    matched == 1 && $1 ~ /'"$key"'/ {
+        x=index($1, "=")
+        print substr($1, x+1, length($1))
+        exit
+    }
+    ' "$filename"
 }
 
 load_config() {
