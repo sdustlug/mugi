@@ -5,8 +5,8 @@ StartLimitIntervalSec=90
 StartLimitBurst=3
  
 [Service]
-User=mirror
-Group=mirror
+User=mirrors
+Group=mirrors
 ExecStart=mugi /etc/mugi/mugi.conf %i
 Restart=on-failure
  
